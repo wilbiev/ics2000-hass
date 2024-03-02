@@ -146,6 +146,15 @@ class KlikAanKlikUitDevice(LightEntity):
         """Return true if light is on."""
         return self._state
 
+    @property
+    def color_mode(self) -> ColorMode:
+        """Return the color_mode of the light."""
+        # We consider it to be in HS color mode, when work mode is anything
+        # else than "white".
+        if self._brightness:
+            return ColorMode.BRIGHTNESS
+        return ColorMode.ONOFF
+
     def turn_on(self, **kwargs: Any) -> None:
         _LOGGER.info(
             f"Function turn_on called in thread {threading.current_thread().name}"
