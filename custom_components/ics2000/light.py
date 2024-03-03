@@ -1,38 +1,43 @@
 """Platform for light integration."""
 from __future__ import annotations
 
-import math
+from enum import Enum
 import logging
-import time
+import math
 import threading
+import time
+from typing import Any
+
 import voluptuous as vol
 
-from typing import Any
-from ics2000.Core import Hub
-from ics2000.Devices import Device, Dimmer
-from enum import Enum
-
-# Import the device class from the component that you want to support
-import homeassistant.helpers.config_validation as cv
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     PLATFORM_SCHEMA,
     ColorMode,
     LightEntity,
 )
-from homeassistant.const import CONF_PASSWORD, CONF_MAC, CONF_EMAIL
+from homeassistant.const import CONF_EMAIL, CONF_MAC, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+
+# Import the device class from the component that you want to support
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from ics2000.Core import Hub
+from ics2000.Devices import Device, Dimmer
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def repeat(tries: int, sleep: int, callable_function, **kwargs):
-    _LOGGER.info(f"Function repeat called in thread {threading.current_thread().name}")
+    """Repeat action."""
+
+    _LOGGER.info("Function repeat called in thread %s", threading.current_thread().name)
     qualname = getattr(callable_function, "__qualname__")
     for i in range(0, tries):
-        _LOGGER.info(f"Try {i + 1} of {tries} on {qualname}")
+        _LOGGER.info("Try %s", i + 1)
+        _LOGGER.info(" of %s", tries)
+        _LOGGER.info(" on %s", qualname)
         callable_function(**kwargs)
         time.sleep(sleep if i != tries - 1 else 0)
 
@@ -78,13 +83,18 @@ def setup_platform(
 
 
 class KlikAanKlikUitAction(Enum):
+    """Define actions."""
+
     TURN_ON = "on"
     TURN_OFF = "off"
     DIM = "dim"
 
 
 class KlikAanKlikUitThread(threading.Thread):
+    """Define thread."""
+
     def __init__(self, action: KlikAanKlikUitAction, device_id, target, kwargs):
+        """Initialize thread."""
         super().__init__(
             # Thread name may be 15 characters max
             name=f"kaku{action.value}{device_id}",
@@ -94,6 +104,8 @@ class KlikAanKlikUitThread(threading.Thread):
 
     @staticmethod
     def has_running_threads(device_id) -> bool:
+        """Check if thread is running."""
+
         running_threads = [
             thread.name
             for thread in threading.enumerate()
@@ -105,16 +117,18 @@ class KlikAanKlikUitThread(threading.Thread):
             ]
         ]
         if running_threads:
-            _LOGGER.info(f'Running KlikAanKlikUit threads: {",".join(running_threads)}')
+            _LOGGER.info(
+                "Running KlikAanKlikUit threads: %s", ",".join(running_threads)
+            )
             return True
         return False
 
 
 class KlikAanKlikUitDevice(LightEntity):
-    """Representation of a KlikAanKlikUit device"""
+    """Representation of a KlikAanKlikUit device."""
 
     def __init__(self, device: Device, tries: int, sleep: int) -> None:
-        """Initialize a KlikAanKlikUitDevice"""
+        """Initialize a KlikAanKlikUitDevice."""
         self.tries = tries
         self.sleep = sleep
         self._name = device.name
@@ -144,6 +158,7 @@ class KlikAanKlikUitDevice(LightEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if light is on."""
+
         return self._state
 
     @property
@@ -156,8 +171,10 @@ class KlikAanKlikUitDevice(LightEntity):
         return ColorMode.ONOFF
 
     def turn_on(self, **kwargs: Any) -> None:
+        """Turn on light."""
+
         _LOGGER.info(
-            f"Function turn_on called in thread {threading.current_thread().name}"
+            "Function turn_on called in thread %s", threading.current_thread().name
         )
         if KlikAanKlikUitThread.has_running_threads(self._id):
             return
@@ -192,8 +209,10 @@ class KlikAanKlikUitDevice(LightEntity):
         self._state = True
 
     def turn_off(self, **kwargs: Any) -> None:
+        """Turn off light."""
+
         _LOGGER.info(
-            f"Function turn_off called in thread {threading.current_thread().name}"
+            "Function turn_off called in thread %s", threading.current_thread().name
         )
         if KlikAanKlikUitThread.has_running_threads(self._id):
             return
@@ -212,4 +231,6 @@ class KlikAanKlikUitDevice(LightEntity):
         self._state = False
 
     def update(self) -> None:
+        """Update."""
+
         pass
