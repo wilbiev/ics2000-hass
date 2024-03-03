@@ -231,6 +231,6 @@ class KlikAanKlikUitDevice(LightEntity):
         self._state = False
 
     def update(self) -> None:
-        """Update."""
+        """Pass status."""
 
         pass
